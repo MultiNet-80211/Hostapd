@@ -76,6 +76,8 @@ void hostapd_config_defaults_bss(struct hostapd_bss_config *bss)
 
 	bss->pwd_group = 19; /* ECC: GF(p=256) */
 
+	bss->active = 1; //default to active
+
 #ifdef CONFIG_IEEE80211W
 	bss->assoc_sa_query_max_timeout = 1000;
 	bss->assoc_sa_query_retry_timeout = 201;

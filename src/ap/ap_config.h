@@ -334,6 +334,7 @@ struct hostapd_bss_config {
 #define TDLS_PROHIBIT_CHAN_SWITCH BIT(1)
 	int tdls;
 	int disable_11n;
+	int active;
 };
 
 

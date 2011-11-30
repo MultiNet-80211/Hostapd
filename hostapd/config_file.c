@@ -685,12 +685,17 @@ static int hostapd_parse_rates(int **rate_list, char *val)
 }
 
 
-static int hostapd_config_bss(struct hostapd_config *conf, const char *ifname)
+static int hostapd_config_bss(struct hostapd_config *conf, int active)
 {
 	struct hostapd_bss_config *bss;
 
-	if (*ifname == '\0')
-		return -1;
+	//Generate the internal iface name so it is easier to add and remove bss's later
+	char int_str[10];
+	sprintf(int_str,"%d",(int)(conf->num_bss + 1));
+	char ifname[25] = "";
+	strcat(ifname, (conf->bss[0].iface));
+	strcat(ifname,"_");
+	strcat(ifname,int_str);
 
 	bss = os_realloc(conf->bss, (conf->num_bss + 1) *
 			 sizeof(struct hostapd_bss_config));
@@ -716,7 +721,8 @@ static int hostapd_config_bss(struct hostapd_config *conf, const char *ifname)
 	hostapd_config_defaults_bss(bss);
 	os_strlcpy(bss->iface, ifname, sizeof(bss->iface));
 	os_memcpy(bss->ssid.vlan, bss->iface, IFNAMSIZ + 1);
-
+	//set active
+	bss->active = active;
 	return 0;
 }
 
@@ -1859,7 +1865,7 @@ struct hostapd_config * hostapd_config_read(const char *fname)
 				errors++;
 			}
 		} else if (os_strcmp(buf, "bss") == 0) {
-			if (hostapd_config_bss(conf, pos)) {
+			if (hostapd_config_bss(conf, 1)) {
 				wpa_printf(MSG_ERROR, "Line %d: invalid bss "
 					   "item", line);
 				errors++;
@@ -2066,6 +2072,13 @@ struct hostapd_config * hostapd_config_read(const char *fname)
 	}
 
 	fclose(f);
+
+	//create some blank bss's
+	char int_str[10];
+	int j;
+	for(j = conf->num_bss; j < 50; j++) {
+		hostapd_config_bss(conf,0);
+	}
 
 	for (i = 0; i < conf->num_bss; i++) {
 		bss = &conf->bss[i];

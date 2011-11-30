@@ -3,7 +3,8 @@ CC=gcc
 endif
 
 ifndef CFLAGS
-CFLAGS = -MMD -O2 -Wall -g
+#CFLAGS = -MMD -O2 -Wall -g
+CFLAGS = -MMD -O0 -Wall -g
 endif
 
 CFLAGS += -I../src

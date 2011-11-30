@@ -93,51 +93,6 @@ static void hostapd_reload_bss(struct hostapd_data *hapd)
 	wpa_printf(MSG_DEBUG, "Reconfigured interface %s", hapd->conf->iface);
 }
 
-
-int hostapd_reload_config(struct hostapd_iface *iface)
-{
-	struct hostapd_data *hapd = iface->bss[0];
-	struct hostapd_config *newconf, *oldconf;
-	size_t j;
-
-	if (iface->config_read_cb == NULL)
-		return -1;
-	newconf = iface->config_read_cb(iface->config_fname);
-	if (newconf == NULL)
-		return -1;
-
-	/*
-	 * Deauthenticate all stations since the new configuration may not
-	 * allow them to use the BSS anymore.
-	 */
-	for (j = 0; j < iface->num_bss; j++) {
-		hostapd_flush_old_stations(iface->bss[j]);
-		hostapd_broadcast_wep_clear(iface->bss[j]);
-
-#ifndef CONFIG_NO_RADIUS
-		/* TODO: update dynamic data based on changed configuration
-		 * items (e.g., open/close sockets, etc.) */
-		radius_client_flush(iface->bss[j]->radius, 0);
-#endif /* CONFIG_NO_RADIUS */
-	}
-
-	oldconf = hapd->iconf;
-	iface->conf = newconf;
-
-	for (j = 0; j < iface->num_bss; j++) {
-		hapd = iface->bss[j];
-		hapd->iconf = newconf;
-		hapd->conf = &newconf->bss[j];
-		hostapd_reload_bss(hapd);
-	}
-
-	hostapd_config_free(oldconf);
-
-
-	return 0;
-}
-
-
 static void hostapd_broadcast_key_clear_iface(struct hostapd_data *hapd,
 					      char *ifname)
 {
@@ -639,7 +594,9 @@ static int hostapd_setup_bss(struct hostapd_data *hapd, int first)
 		return -1;
 	}
 
-	ieee802_11_set_beacon(hapd);
+	if(conf->active == 1) {
+	  ieee802_11_set_beacon(hapd);
+	}
 
 	if (hapd->wpa_auth && wpa_init_keys(hapd->wpa_auth) < 0)
 		return -1;
@@ -951,3 +908,76 @@ void hostapd_new_assoc_sta(struct hostapd_data *hapd, struct sta_info *sta,
 	} else
 		wpa_auth_sta_associated(hapd->wpa_auth, sta->wpa_sm);
 }
+
+int hostapd_reload_config(struct hostapd_iface *iface)
+{
+	struct hostapd_data *hapd = iface->bss[0];
+	struct hostapd_config *newconf, *oldconf;
+	size_t j,k;
+
+	if (iface->config_read_cb == NULL)
+		return -1;
+	newconf = iface->config_read_cb(iface->config_fname);
+	if (newconf == NULL)
+		return -1;
+
+	/*
+	 * Deauthenticate stations where needed
+	 */
+	int deauth = 0;
+	int delete = 0;
+	for (j = 0; j < iface->num_bss; j++) {
+		if(iface->conf->bss[j].active == 0) {
+			continue;
+		}
+		deauth = 0;
+		delete = 1;
+        for(k = 0; k < newconf->num_bss; k++) {
+        	if(newconf->bss[k].active == 0) {
+        		 continue;
+        	}
+        	if(strcmp((newconf->bss[k].ssid.ssid),(iface->bss[j]->conf->ssid.ssid))) {
+        		//the network still exists check for changes and deauth if needed
+        		delete = 0;
+        		if(strcmp((newconf->bss[k].ssid.wpa_passphrase),(iface->bss[j]->conf->ssid.wpa_passphrase))) {
+        			deauth = 1;
+        		}
+        		//TODO there are probably more reasons to deauthenticate
+        		break;
+        	}
+        }
+
+        if(deauth == 1) {
+			hostapd_flush_old_stations(iface->bss[j]);
+			hostapd_broadcast_wep_clear(iface->bss[j]);
+#ifndef CONFIG_NO_RADIUS
+		/* TODO: update dynamic data based on changed configuration
+		 * items (e.g., open/close sockets, etc.) */
+		radius_client_flush(iface->bss[j]->radius, 0);
+#endif /* CONFIG_NO_RADIUS */
+        }
+
+        if(delete == 1) {
+        	//the bss has been removed
+        	//TODO not sure how to handle bss deletion
+        }
+	}
+
+	oldconf = hapd->iconf;
+	iface->conf = newconf;
+
+	for (j = 0; j < iface->num_bss; j++) {
+
+		hapd = iface->bss[j];
+		hapd->iconf = newconf;
+		hapd->conf = &newconf->bss[j];
+		if(hapd->conf->active == 1)
+		  hostapd_reload_bss(hapd);
+
+	}
+
+	hostapd_config_free(oldconf);
+
+	return 0;
+}
+
