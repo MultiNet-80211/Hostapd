@@ -1380,6 +1380,7 @@ static void nl80211_new_station_event(struct wpa_driver_nl80211_data *drv,
 	if (tb[NL80211_ATTR_MAC] == NULL)
 		return;
 	addr = nla_data(tb[NL80211_ATTR_MAC]);
+
 	wpa_printf(MSG_DEBUG, "nl80211: New station " MACSTR, MAC2STR(addr));
 
 	if (is_ap_interface(drv->nlmode) && drv->no_monitor_iface_capab) {

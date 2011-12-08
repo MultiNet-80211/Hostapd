@@ -924,14 +924,18 @@ int hostapd_reload_config(struct hostapd_iface *iface)
 	/*
 	 * Deauthenticate stations where needed
 	 */
-	int deauth = 0;
-	int delete = 0;
+	int deauth = 0; //should we deauthenticate the connected stations
+	int delete = 0; //has the network been deleted
+	int new = 0; // is this a new network?
+
+	//look for removed and changed BBS configurations
 	for (j = 0; j < iface->num_bss; j++) {
 		if(iface->conf->bss[j].active == 0) {
 			continue;
 		}
 		deauth = 0;
 		delete = 1;
+		new = 1;
         for(k = 0; k < newconf->num_bss; k++) {
         	if(newconf->bss[k].active == 0) {
         		 continue;
@@ -943,6 +947,9 @@ int hostapd_reload_config(struct hostapd_iface *iface)
         			deauth = 1;
         		}
         		//TODO there are probably more reasons to deauthenticate
+
+        		newconf->bss[k].active = 2; //flag thar this is an existing interface
+
         		break;
         	}
         }
@@ -958,6 +965,7 @@ int hostapd_reload_config(struct hostapd_iface *iface)
         }
 
         if(delete == 1) {
+    		wpa_printf(MSG_DEBUG, "MULTINET:: BSS %s DELETED!", iface->bss[j]->conf->ssid.ssid);
         	//the bss has been removed
         	//TODO not sure how to handle bss deletion
         }
@@ -971,8 +979,16 @@ int hostapd_reload_config(struct hostapd_iface *iface)
 		hapd = iface->bss[j];
 		hapd->iconf = newconf;
 		hapd->conf = &newconf->bss[j];
-		if(hapd->conf->active == 1)
-		  hostapd_reload_bss(hapd);
+		if(hapd->conf->active > 1) {
+			//the interface exists in the old conf it is not new but should be active
+			hapd->conf->active = 1;
+		} else {
+			//a new interface has been added
+    		wpa_printf(MSG_DEBUG, "MULTINET:: BSS %s ADDED!", hapd->conf->ssid.ssid);
+		}
+		if(hapd->conf->active == 1) {
+			hostapd_reload_bss(hapd);
+		}
 
 	}
 

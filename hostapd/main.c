@@ -554,6 +554,9 @@ int main(int argc, char *argv[])
 		}
 	}
 
+	//always timestamp
+	wpa_debug_timestamp++;
+
 	if (optind == argc)
 		usage();
 

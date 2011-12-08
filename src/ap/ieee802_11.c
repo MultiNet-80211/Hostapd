@@ -1671,6 +1671,13 @@ static void handle_assoc_cb(struct hostapd_data *hapd,
 		       "associated (aid %d)",
 		       sta->aid);
 
+	wpa_printf(MSG_DEBUG, "MULTINET:: BSS %s DEVICE ASSOCIATED!", hapd->conf->ssid.ssid);
+
+	hostapd_logger(hapd, sta->addr, HOSTAPD_MODULE_IEEE80211,
+			       HOSTAPD_LEVEL_INFO,
+			       "associated (aid %d)",
+			       sta->aid);
+
 	if (sta->flags & WLAN_STA_ASSOC)
 		new_assoc = 0;
 	sta->flags |= WLAN_STA_ASSOC;
