@@ -691,7 +691,7 @@ static int hostapd_config_bss(struct hostapd_config *conf, int active)
 
 	//Generate the internal iface name so it is easier to add and remove bss's later
 	char int_str[10];
-	sprintf(int_str,"%d",(int)(conf->num_bss + 1));
+	sprintf(int_str,"%d",(int)(conf->num_bss));
 	char ifname[25] = "";
 	strcat(ifname, (conf->bss[0].iface));
 	strcat(ifname,"_");
