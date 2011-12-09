@@ -940,10 +940,10 @@ int hostapd_reload_config(struct hostapd_iface *iface)
         	if(newconf->bss[k].active == 0) {
         		 continue;
         	}
-        	if(strcmp((newconf->bss[k].ssid.ssid),(iface->bss[j]->conf->ssid.ssid))) {
+        	if(strcmp((newconf->bss[k].ssid.ssid),(iface->bss[j]->conf->ssid.ssid)) == 0) {
         		//the network still exists check for changes and deauth if needed
         		delete = 0;
-        		if(strcmp((newconf->bss[k].ssid.wpa_passphrase),(iface->bss[j]->conf->ssid.wpa_passphrase))) {
+        		if(strcmp((newconf->bss[k].ssid.wpa_passphrase),(iface->bss[j]->conf->ssid.wpa_passphrase)) != 0) {
         			deauth = 1;
         		}
         		//TODO there are probably more reasons to deauthenticate
@@ -982,12 +982,17 @@ int hostapd_reload_config(struct hostapd_iface *iface)
 		if(hapd->conf->active > 1) {
 			//the interface exists in the old conf it is not new but should be active
 			hapd->conf->active = 1;
+			hostapd_reload_bss(hapd);
+
 		} else if (hapd->conf->active != 0) {
 			//a new interface has been added
     		wpa_printf(MSG_DEBUG, "MULTINET:: BSS %s ADDED!", hapd->conf->ssid.ssid);
+    		//add it to the bridge
+    		//hostapd_setup_bss(hapd, 0);
 		}
+
 		if(hapd->conf->active == 1) {
-			hostapd_reload_bss(hapd);
+
 		}
 
 	}
