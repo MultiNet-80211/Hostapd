@@ -948,7 +948,7 @@ int hostapd_reload_config(struct hostapd_iface *iface)
         		}
         		//TODO there are probably more reasons to deauthenticate
 
-        		newconf->bss[k].active = 2; //flag thar this is an existing interface
+        		newconf->bss[k].active = 2; //flag that this is an existing interface
 
         		break;
         	}
@@ -982,7 +982,7 @@ int hostapd_reload_config(struct hostapd_iface *iface)
 		if(hapd->conf->active > 1) {
 			//the interface exists in the old conf it is not new but should be active
 			hapd->conf->active = 1;
-		} else {
+		} else if (hapd->conf->active != 0) {
 			//a new interface has been added
     		wpa_printf(MSG_DEBUG, "MULTINET:: BSS %s ADDED!", hapd->conf->ssid.ssid);
 		}
