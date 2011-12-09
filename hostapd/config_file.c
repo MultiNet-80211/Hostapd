@@ -720,6 +720,7 @@ static int hostapd_config_bss(struct hostapd_config *conf, int active)
 
 	hostapd_config_defaults_bss(bss);
 	os_strlcpy(bss->iface, ifname, sizeof(bss->iface));
+	os_strlcpy(bss->bridge, conf->bss[0].bridge, sizeof(conf->bss[0].bridge));
 	os_memcpy(bss->ssid.vlan, bss->iface, IFNAMSIZ + 1);
 	//set active
 	bss->active = active;
