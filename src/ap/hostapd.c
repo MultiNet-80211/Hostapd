@@ -968,6 +968,8 @@ int hostapd_reload_config(struct hostapd_iface *iface)
     		wpa_printf(MSG_DEBUG, "MULTINET:: BSS %s DELETED!", iface->bss[j]->conf->ssid.ssid);
         	//the bss has been removed
         	//TODO not sure how to handle bss deletion
+    		//hostapd_flush_old_stations(iface->bss[j]);
+    		//newconf->bss[k].active = 0;
         }
 	}
 
@@ -988,7 +990,7 @@ int hostapd_reload_config(struct hostapd_iface *iface)
 			//a new interface has been added
     		wpa_printf(MSG_DEBUG, "MULTINET:: BSS %s ADDED!", hapd->conf->ssid.ssid);
     		//add it to the bridge
-    		//hostapd_setup_bss(hapd, 0);
+    		hostapd_reload_bss(hapd);
 		}
 
 		if(hapd->conf->active == 1) {
