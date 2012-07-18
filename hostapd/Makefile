@@ -4,7 +4,7 @@ endif
 
 ifndef CFLAGS
 #CFLAGS = -MMD -O2 -Wall -g
-CFLAGS = -MMD -O0 -Wall -g
+CFLAGS = -MMD -g -O0 -Wall 
 endif
 
 CFLAGS += -I../src

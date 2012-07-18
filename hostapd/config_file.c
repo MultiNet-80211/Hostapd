@@ -2077,7 +2077,8 @@ struct hostapd_config * hostapd_config_read(const char *fname)
 	//create some blank bss's
 	char int_str[10];
 	int j;
-	for(j = conf->num_bss; j < 50; j++) {
+	//for(j = conf->num_bss; j < 50; j++) {
+	for(j = conf->num_bss; j < 10; j++) {
 		hostapd_config_bss(conf,0);
 	}
 
