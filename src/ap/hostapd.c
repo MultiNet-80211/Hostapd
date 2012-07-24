@@ -934,7 +934,7 @@ int hostapd_reload_config(struct hostapd_iface *iface)
 			continue;
 		}
 		deauth = 0;
-		delete = 1;
+		delete = -1;
 		new = 1;
         for(k = 0; k < newconf->num_bss; k++) {
         	if(newconf->bss[k].active == 0) {
@@ -951,6 +951,10 @@ int hostapd_reload_config(struct hostapd_iface *iface)
         		newconf->bss[k].active = 2; //flag that this is an existing interface
 
         		break;
+        	} else {
+        		//network no longer exists
+        		delete = 1;
+        		deauth = 1;
         	}
         }
 
@@ -968,8 +972,10 @@ int hostapd_reload_config(struct hostapd_iface *iface)
     		wpa_printf(MSG_DEBUG, "MULTINET:: BSS %s DELETED!", iface->bss[j]->conf->ssid.ssid);
         	//the bss has been removed
         	//TODO not sure how to handle bss deletion
-    		//hostapd_flush_old_stations(iface->bss[j]);
-    		//newconf->bss[k].active = 0;
+    		hostapd_free_stas(iface->bss[j]);
+    		hostapd_flush_old_stations(iface->bss[j]);
+    		//hostapd_cleanup(iface->bss[j]);
+    		hostapd_deinit_wpa(iface->bss[j]);
         }
 	}
 
@@ -977,27 +983,22 @@ int hostapd_reload_config(struct hostapd_iface *iface)
 	iface->conf = newconf;
 
 	for (j = 0; j < iface->num_bss; j++) {
-
 		hapd = iface->bss[j];
 		hapd->iconf = newconf;
 		hapd->conf = &newconf->bss[j];
-		if(hapd->conf->active > 1) {
+		if(hapd->conf->active == 2) {
 			//the interface exists in the old conf it is not new but should be active
 			hapd->conf->active = 1;
-			hostapd_reload_bss(hapd);
-
+    		hostapd_reload_bss(hapd);
 		} else if (hapd->conf->active != 0) {
 			//a new interface has been added
     		wpa_printf(MSG_DEBUG, "MULTINET:: BSS %s ADDED!", hapd->conf->ssid.ssid);
-    		//add it to the bridge
     		hostapd_reload_bss(hapd);
 		}
 
-		if(hapd->conf->active == 1) {
-
-		}
-
 	}
+
+	ieee802_11_set_beacons(iface);
 
 	hostapd_config_free(oldconf);
 
